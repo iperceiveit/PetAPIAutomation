@@ -31,19 +31,19 @@ This project is a Cucumber-based test automation suite for testing the Pet API. 
 
 1. Execute tests using Maven
 ``` 
-mvn test
+mvn clean verify
 ```
 2. Executed test using Test Runner
 
 ```
-Go to folder src>test>java>testRunners
+Go to folder src->test->java->testRunners
 Right click TestRunner.java and select Run 'TestRunner'
 ```
 ### Viewing the cucumber reports
 
 Navigate to target/cucumber-reports.html and sample report is as below
 
-![img.png](img.png)
+
 
 ### Test Scenarios and implementation details
 
