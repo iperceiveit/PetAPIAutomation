@@ -41,9 +41,9 @@ Right click TestRunner.java and select Run 'TestRunner'
 ```
 ### Viewing the cucumber reports
 
-Navigate to target/cucumber-reports.html and sample report is as below
+Navigate to target/cucumber-reports.html and sample report is as below and also its available in [this](report/cucumber-reports.html) location
 
-
+![Report](report/Sample_report.jpg)
 
 ### Test Scenarios and implementation details
 
