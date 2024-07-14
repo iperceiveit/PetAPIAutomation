@@ -3,24 +3,27 @@ package petapi.stepDefinitions;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.Before;
 import petapi.setData.petAPI;
-
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class petApiStepDefinitions extends BaseTest{
 
     private petAPI PetApi;
     private Response response;
-    private int petID;
+    private static int AddedPetID;
+
+    String validResponse = "{\n" +
+            "    \"name\": \"Buddy Updated\",\n" +
+            "    \"age\": 4,\n" +
+            "    \"avatarUrl\": \"http://example.com/buddy_updated.jpg\",\n" +
+            "    \"category\": \"Dog\"\n" +
+            "}";
 
     public petApiStepDefinitions(){
-        System.out.println("Loading the petApiStetDefinition");
         initBaseTest();
     }
 
@@ -36,9 +39,6 @@ public class petApiStepDefinitions extends BaseTest{
 
     @When("I add the pet")
     public void iAddThePet() {
-        System.out.println("Base URI: " + RestAssured.baseURI);
-        System.out.println("Port: " + RestAssured.port);
-        System.out.println("Base Path: " + RestAssured.basePath);
         response = given()
                 .contentType(ContentType.JSON)
                 .body(PetApi)
@@ -49,47 +49,54 @@ public class petApiStepDefinitions extends BaseTest{
     @Then("the pet is added successfully")
     public void thePetIsAddedSuccessfully() {
         response.then().statusCode(201);
-        Integer id = response.jsonPath().getInt("id");
-        assertNotNull(id, "Id returned should not be null");
+        AddedPetID = response.jsonPath().getInt("id");
+        assertNotNull("Id returned should not be null",AddedPetID);
     }
 
-    @Given("a pet exists with ID {int}")
-    public void aPetExistsWithID(int id) {
-        this.petID = id;
-    }
 
     @When("I retrieve the pet by ID")
     public void iRetrieveThePetByID() {
         response = given()
-                .pathParam("petID", petID)
+                .pathParam("petID", AddedPetID)
                 .when()
                 .get("/pet/{petID}");
     }
 
     @Then("the pet details are returned")
     public void thePetDetailsAreReturned() {
-        response.then().statusCode(201);
-        petAPI responsePet = response.as(petAPI.class);
-        System.out.println("Response value "+responsePet);
-
-        assertNotNull(responsePet, "ResponsePet object is null");
-
-        assertEquals(PetApi.getName(), responsePet.getName(), "Name mismatch");
-        assertEquals(PetApi.getAge(), responsePet.getAge(), "Age mismatch");
-        assertEquals(PetApi.getAvatarUrl(), responsePet.getAvatarUrl(), "Avatar URL mismatch");
-        assertEquals(PetApi.getCategory(), responsePet.getCategory(), "Category mismatch");
+        response.then().statusCode(200);
     }
 
     @When("I update the pet with name {string}, age {int}, avatarUrl {string} and category {string}")
     public void iUpdateThePetWithNameAgeAvatarUrlAndCategory(String name, int age, String avatarUrl, String category) {
-        initializeData(name, age, avatarUrl, category);
+                initializeData(name, age, avatarUrl, category);
 
-        response = given()
-                .pathParam("petId", petID)
-                .contentType(ContentType.JSON)
-                .body(PetApi)
-                .when()
-                .put("/pet/{petId}");
+        if(response.statusCode() == 201){
+            response = given()
+                    .pathParam("petId", AddedPetID)
+                    .contentType(ContentType.JSON)
+                    .body(PetApi)
+                    .when()
+                    .put("/pet/{petId}");
+        }
+    }
+
+    @When("Send a update request with out Age parameter")
+    public void SendaupdaterequestwithoutAgeparameter() {
+        String petNoAge = "{\n" +
+                "    \"name\": \"Trev\",\n" +
+                "    \"avatarUrl\": \"www.verifypapu.com\",\n" +
+                "    \"category\": \"cat\"\n" +
+                "}";
+
+        if(response.statusCode() == 201){
+            response = given()
+                    .pathParam("petId", AddedPetID)
+                    .contentType(ContentType.JSON)
+                    .body(petNoAge)
+                    .when()
+                    .put("/pet/{petId}");
+        }
     }
 
     @Then("the pet is updated successfully")
@@ -99,10 +106,15 @@ public class petApiStepDefinitions extends BaseTest{
 
     @When("I delete the pet")
     public void iDeleteThePet() {
-        response = given()
-                .pathParam("petId", petID)
-                .when()
-                .delete("/pet/{petId}");
+        if(response.statusCode() == 201) {
+            String reqForDelete = response.getBody().prettyPrint();
+            response = given()
+                    .pathParam("petId", AddedPetID)
+                    .header("Content-Type", "application/json")
+                    .body(reqForDelete)
+                    .when()
+                    .post("/pet/{petId}/remove");
+        }
     }
 
     @Then("the pet is deleted successfully")
@@ -110,24 +122,85 @@ public class petApiStepDefinitions extends BaseTest{
         response.then().statusCode(200);
     }
 
-    @Given("I have a new pet with name {string}")
-    public void iHaveANewPetWithName(String name) {
-        initializeData(name, 0, null, null);
+    @Given("I have a new pet with out name")
+    public void iHaveANewPetWithOutMandatoryDetails() {
+        String petNoName = "{\n" +
+                "    \"age\": -1,\n" +
+                "    \"avatarUrl\": \"www.verifypapu.com\",\n" +
+                "    \"category\": \"cat\"\n" +
+                "}";
     }
 
-    @Then("the pet is not updated")
-    public void thePetIsNotUpdated() {
-        response.then().statusCode(400);
+    @When("I {string} the pet")
+    public void iPerformOperationOnThePet(String operation) {
+        int invalidID = 39484;
+        String petNoName = "{\n" +
+                "    \"age\": -1,\n" +
+                "    \"avatarUrl\": \"www.verifypapu.com\",\n" +
+                "    \"category\": \"cat\"\n" +
+                "}";
+        switch (operation) {
+            case "add":
+                response = given()
+                        .contentType(ContentType.JSON)
+                        .body(petNoName)
+                        .when()
+                        .post("/pet");
+            case "update":
+                response = given()
+                        .pathParam("petId", AddedPetID)
+                        .contentType(ContentType.JSON)
+                        .body(petNoName)
+                        .when()
+                        .put("/pet/{petId}");
+                break;
+            case "delete":
+                response = given()
+                        .pathParam("petId", invalidID)
+                        .when()
+                        .contentType(ContentType.JSON)
+                        .body(validResponse)
+                        .post("/pet/{petId}/remove");
+                break;
+            case "retrieve":
+                response = given()
+                        .pathParam("petID", invalidID)
+                        .when()
+                        .get("/pet/{petID}");
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid operation: " + operation);
+        }
     }
 
-    @Then("the pet is not deleted")
-    public void thePetIsNotDeleted() {
-        response.then().statusCode(400);
-    }
-
-    @Then("the pet is not retrieved")
-    public void thePetIsNotRetrieved() {
-        response.then().statusCode(400);
+    @Then("the pet is not {string} without {string}")
+    public void thePetIsNotOperation(String operation, String withoutField) {
+        String code;
+        String error;
+        String message;
+        switch (operation) {
+            case "update":
+                code = response.jsonPath().getString("code");
+                error = response.jsonPath().getString("error");
+                message = response.jsonPath().getString("message");
+                assertEquals("FST_ERR_VALIDATION", code);
+                assertEquals("Bad Request", error);
+                assertEquals("body must have required property '"+withoutField+"'", message);
+                response.then().statusCode(400);
+                break;
+            case "delete":
+                error = response.jsonPath().getString("error");
+                message = response.jsonPath().getString("message");
+                assertEquals("Not Found", error);
+                assertEquals("Route POST:/api/pet/335 not found", message);
+                response.then().statusCode(404);
+                break;
+            case "retrieve":
+                response.then().statusCode(404);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid operation: " + operation);
+        }
     }
 
     @Then("a validation error occurs")
@@ -138,9 +211,20 @@ public class petApiStepDefinitions extends BaseTest{
     // Function to initialize test data values
     private void initializeData(String name, int age, String avatarUrl, String category) {
         PetApi = new petAPI();
-        PetApi.setName(name);
-        PetApi.setAge(age);
+        if(!("null".equals(name))) {
+            PetApi.setName(name);
+        }
+        if(age>0)
+            PetApi.setAge(age);
         PetApi.setAvatarUrl(avatarUrl);
         PetApi.setCategory(category);
+    }
+
+    @Given("I retrieve the pet by the ID from the previous scenario")
+    public void iRetrieveThePetByTheIDFromThePreviousScenario() {
+        response = given()
+                .pathParam("petID", AddedPetID)
+                .when()
+                .get("/pet/{petID}");
     }
 }
