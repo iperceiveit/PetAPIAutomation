@@ -19,7 +19,7 @@ This project is a Cucumber-based test automation suite for testing the Pet API. 
  - Clone the repository
 
 ```
-    git clone <repository-url>
+    git clone https://github.com/iperceiveit/PetAPIAutomation/
     cd pet-api-automation
 ```
  - Install dependencies
