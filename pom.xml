@@ -11,6 +11,9 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <cucumber.features>src/test/resources/features</cucumber.features>
+        <cucumber.glue>petapi.stepDefinitions</cucumber.glue>
+        <cucumber.plugin>pretty,html:target/cucumber-reports.html,json:target/cucumber-reports.json</cucumber.plugin>
     </properties>
 
     <dependencies>
@@ -54,12 +57,6 @@
             <artifactId>cucumber-junit-platform-engine</artifactId>
             <version>7.18.0</version>
             <scope>test</scope>
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <groupId>org.junit.platform</groupId>-->
-<!--                    <artifactId>junit-platform-engine</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
         </dependency>
 
         <!-- Dependency to build JSON faster -->
@@ -91,6 +88,17 @@
                     <includes>
                         <include>**/TestRunner.java</include>
                     </includes>
+                    <systemPropertyVariables>
+                        <cucumber.features>${cucumber.features}</cucumber.features>
+                        <cucumber.glue>${cucumber.glue}</cucumber.glue>
+                        <cucumber.plugin>${cucumber.plugin}</cucumber.plugin>
+                    </systemPropertyVariables>
+                    <properties>
+                        <property>
+                            <name>listener</name>
+                            <value>io.cucumber.junit.Cucumber</value>
+                        </property>
+                    </properties>
                 </configuration>
             </plugin>
         </plugins>
